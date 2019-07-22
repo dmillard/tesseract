@@ -11,14 +11,14 @@ using namespace tesseract_ros_examples;
 TEST(TesseractROSExamples, BasicCartesianCppExampleUnit)
 {
   ros::NodeHandle nh;
-  BasicCartesianExample example(nh, false, false, 5, "cpp");
+  BasicCartesianExample example(nh, true, false, 5, "cpp");
   EXPECT_TRUE(example.run());
 }
 
 TEST(TesseractROSExamples, BasicCartesianJsonExampleUnit)
 {
   ros::NodeHandle nh;
-  BasicCartesianExample example(nh, false, false, 5, "json");
+  BasicCartesianExample example(nh, true, false, 5, "json");
   EXPECT_TRUE(example.run());
 }
 

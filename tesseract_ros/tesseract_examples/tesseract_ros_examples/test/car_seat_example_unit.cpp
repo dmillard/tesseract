@@ -11,7 +11,7 @@ using namespace tesseract_ros_examples;
 TEST(TesseractROSExamples, CarSeatCppExampleUnit)
 {
   ros::NodeHandle nh;
-  CarSeatExample example(nh, false, false);
+  CarSeatExample example(nh, true, false);
   EXPECT_TRUE(example.run());
 }
 

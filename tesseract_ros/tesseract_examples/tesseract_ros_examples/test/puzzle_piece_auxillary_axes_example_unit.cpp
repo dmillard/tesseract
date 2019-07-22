@@ -11,7 +11,7 @@ using namespace tesseract_ros_examples;
 TEST(TesseractROSExamples, PuzzlePieceAuxillaryAxesCppExampleUnit)
 {
   ros::NodeHandle nh;
-  PuzzlePieceAuxillaryAxesExample example(nh, false, false);
+  PuzzlePieceAuxillaryAxesExample example(nh, true, false);
   EXPECT_TRUE(example.run());
 }
 
