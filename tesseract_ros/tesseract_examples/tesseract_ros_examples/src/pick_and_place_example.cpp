@@ -169,7 +169,7 @@ bool PickAndPlaceExample::run()
   pci.basic_info.dt_lower_lim = 2;    // 1/most time
   pci.basic_info.dt_upper_lim = 100;  // 1/least time
   pci.basic_info.start_fixed = true;
-  pci.basic_info.use_time = false;
+  pci.basic_info.use_time = true;
 
   // Create Kinematic Object
   pci.kin = pci.getManipulator(pci.basic_info.manip);
@@ -196,7 +196,7 @@ bool PickAndPlaceExample::run()
   {
     std::shared_ptr<trajopt::JointVelTermInfo> jv(new trajopt::JointVelTermInfo);
     jv->targets = std::vector<double>(7, 0.0);
-    jv->coeffs = std::vector<double>(7, 5.0);
+    jv->coeffs = std::vector<double>(7, 25.0);
     jv->term_type = trajopt::TT_COST;
     jv->first_step = 0;
     jv->last_step = pci.basic_info.n_steps - 1;
@@ -205,15 +205,14 @@ bool PickAndPlaceExample::run()
   }
 
   // Add a velocity cnt with time to insure that robot dynamics are obeyed
-  if (false)
+  if (true)
   {
     std::shared_ptr<trajopt::JointVelTermInfo> jv(new trajopt::JointVelTermInfo);
 
     // Taken from iiwa documentation (radians/s) and scaled by 0.8
-    std::vector<double> vel_lower_lim{ 1.71 * -0.8, 1.71 * -0.8, 1.75 * -0.8, 2.27 * -0.8,
-                                       2.44 * -0.8, 3.14 * -0.8, 3.14 * -0.8 };
-    std::vector<double> vel_upper_lim{ 1.71 * 0.8, 1.71 * 0.8, 1.75 * 0.8, 2.27 * 0.8,
-                                       2.44 * 0.8, 3.14 * 0.8, 3.14 * 0.8 };
+    const double scale = 1;
+    std::vector<double> vel_lower_lim{ -scale, -scale, -scale, -scale, -scale, -scale, -scale };
+    std::vector<double> vel_upper_lim{ scale, scale, scale, scale, scale, scale, scale };
 
     jv->targets = std::vector<double>(7, 0.0);
     jv->coeffs = std::vector<double>(7, 50.0);
@@ -224,6 +223,47 @@ bool PickAndPlaceExample::run()
     jv->last_step = pci.basic_info.n_steps - 1;
     jv->name = "joint_velocity_cnt";
     pci.cnt_infos.push_back(jv);
+  }
+
+  // Add an acceleration cnt with time to insure that robot dynamics are obeyed
+  if (true)
+  {
+    std::shared_ptr<trajopt::JointAccTermInfo> ja(new trajopt::JointAccTermInfo);
+
+    // Taken from iiwa documentation (radians/s) and scaled by 0.8
+    const double scale = 5;
+    std::vector<double> acc_lower_lim{ -scale, -scale, -scale, -scale, -scale, -scale, -scale };
+    std::vector<double> acc_upper_lim{ scale, scale, scale, scale, scale, scale, scale };
+
+    ja->targets = std::vector<double>(7, 0.0);
+    ja->coeffs = std::vector<double>(7, 50.0);
+    ja->lower_tols = acc_lower_lim;
+    ja->upper_tols = acc_upper_lim;
+    ja->term_type = (trajopt::TT_CNT | trajopt::TT_USE_TIME);
+    ja->first_step = 0;
+    ja->last_step = pci.basic_info.n_steps - 2;
+    ja->name = "joint_acc_cnt";
+    pci.cnt_infos.push_back(ja);
+  }
+
+  if (true)
+  {
+    std::shared_ptr<trajopt::JointJerkTermInfo> jj(new trajopt::JointJerkTermInfo);
+
+    // Taken from iiwa documentation (radians/s) and scaled by 0.8
+    const double scale = 10;
+    std::vector<double> jerk_lower_lim{ -scale, -scale, -scale, -scale, -scale, -scale, -scale };
+    std::vector<double> jerk_upper_lim{ scale, scale, scale, scale, scale, scale, scale };
+
+    jj->targets = std::vector<double>(7, 0.0);
+    jj->coeffs = std::vector<double>(7, 50.0);
+    jj->lower_tols = jerk_lower_lim;
+    jj->upper_tols = jerk_upper_lim;
+    jj->term_type = (trajopt::TT_CNT | trajopt::TT_USE_TIME);
+    jj->first_step = 0;
+    jj->last_step = pci.basic_info.n_steps - 3;
+    jj->name = "joint_jerk_cnt";
+    pci.cnt_infos.push_back(jj);
   }
 
   // Add cartesian pose cnt at the approach point
@@ -263,7 +303,7 @@ bool PickAndPlaceExample::run()
   }
 
   // Add a cost on the total time to complete the pick
-  if (false)
+  if (true)
   {
     std::shared_ptr<trajopt::TotalTimeTermInfo> time_cost(new trajopt::TotalTimeTermInfo);
     time_cost->name = "time_cost";
@@ -278,7 +318,7 @@ bool PickAndPlaceExample::run()
 
   // Set the optimization parameters (Most are being left as defaults)
   tesseract_motion_planners::TrajOptPlannerConfig config(pick_prob);
-  config.params.max_iter = 100;
+  config.params.max_iter = 1000;
 
   // Create Plot Callback
   if (plotting_)
