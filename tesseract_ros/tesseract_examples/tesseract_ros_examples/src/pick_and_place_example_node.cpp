@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 
   bool plotting = true;
   bool rviz = true;
-  int steps = 5;
+  int steps = 20;
   bool write_to_file = false;
 
   // Get ROS Parameters

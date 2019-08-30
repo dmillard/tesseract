@@ -141,7 +141,7 @@ bool PickAndPlaceExample::run()
   /// PICK ///
   ////////////
 
-  if (rviz_)
+  if (rviz_ && false)
   {
     ROS_ERROR("Press enter to continue");
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -169,7 +169,7 @@ bool PickAndPlaceExample::run()
   pci.basic_info.dt_lower_lim = 2;    // 1/most time
   pci.basic_info.dt_upper_lim = 100;  // 1/least time
   pci.basic_info.start_fixed = true;
-  pci.basic_info.use_time = true;
+  pci.basic_info.use_time = false;
 
   // Create Kinematic Object
   pci.kin = pci.getManipulator(pci.basic_info.manip);
@@ -178,7 +178,7 @@ bool PickAndPlaceExample::run()
   pci.init_info.dt = 0.5;
 
   // Add a collision cost
-  if (true)
+  if (false) // Turned off to debug convexification errors
   {
     std::shared_ptr<trajopt::CollisionTermInfo> collision(new trajopt::CollisionTermInfo);
     collision->name = "collision";
@@ -205,12 +205,12 @@ bool PickAndPlaceExample::run()
   }
 
   // Add a velocity cnt with time to insure that robot dynamics are obeyed
-  if (true)
+  if (false)
   {
     std::shared_ptr<trajopt::JointVelTermInfo> jv(new trajopt::JointVelTermInfo);
 
     // Taken from iiwa documentation (radians/s) and scaled by 0.8
-    const double scale = 1;
+    const double scale = 10;
     std::vector<double> vel_lower_lim{ -scale, -scale, -scale, -scale, -scale, -scale, -scale };
     std::vector<double> vel_upper_lim{ scale, scale, scale, scale, scale, scale, scale };
 
@@ -218,7 +218,7 @@ bool PickAndPlaceExample::run()
     jv->coeffs = std::vector<double>(7, 50.0);
     jv->lower_tols = vel_lower_lim;
     jv->upper_tols = vel_upper_lim;
-    jv->term_type = (trajopt::TT_CNT | trajopt::TT_USE_TIME);
+    jv->term_type = (trajopt::TT_CNT);
     jv->first_step = 0;
     jv->last_step = pci.basic_info.n_steps - 1;
     jv->name = "joint_velocity_cnt";
@@ -231,7 +231,7 @@ bool PickAndPlaceExample::run()
     std::shared_ptr<trajopt::JointAccTermInfo> ja(new trajopt::JointAccTermInfo);
 
     // Taken from iiwa documentation (radians/s) and scaled by 0.8
-    const double scale = 5;
+    const double scale = 100;
     std::vector<double> acc_lower_lim{ -scale, -scale, -scale, -scale, -scale, -scale, -scale };
     std::vector<double> acc_upper_lim{ scale, scale, scale, scale, scale, scale, scale };
 
@@ -239,7 +239,7 @@ bool PickAndPlaceExample::run()
     ja->coeffs = std::vector<double>(7, 50.0);
     ja->lower_tols = acc_lower_lim;
     ja->upper_tols = acc_upper_lim;
-    ja->term_type = (trajopt::TT_CNT | trajopt::TT_USE_TIME);
+    ja->term_type = (trajopt::TT_CNT);
     ja->first_step = 0;
     ja->last_step = pci.basic_info.n_steps - 2;
     ja->name = "joint_acc_cnt";
@@ -251,7 +251,7 @@ bool PickAndPlaceExample::run()
     std::shared_ptr<trajopt::JointJerkTermInfo> jj(new trajopt::JointJerkTermInfo);
 
     // Taken from iiwa documentation (radians/s) and scaled by 0.8
-    const double scale = 10;
+    const double scale = 1000;
     std::vector<double> jerk_lower_lim{ -scale, -scale, -scale, -scale, -scale, -scale, -scale };
     std::vector<double> jerk_upper_lim{ scale, scale, scale, scale, scale, scale, scale };
 
@@ -259,7 +259,7 @@ bool PickAndPlaceExample::run()
     jj->coeffs = std::vector<double>(7, 50.0);
     jj->lower_tols = jerk_lower_lim;
     jj->upper_tols = jerk_upper_lim;
-    jj->term_type = (trajopt::TT_CNT | trajopt::TT_USE_TIME);
+    jj->term_type = (trajopt::TT_CNT);
     jj->first_step = 0;
     jj->last_step = pci.basic_info.n_steps - 3;
     jj->name = "joint_jerk_cnt";
@@ -302,8 +302,28 @@ bool PickAndPlaceExample::run()
     pci.cnt_infos.push_back(pose_constraint);
   }
 
-  // Add a cost on the total time to complete the pick
+  // Add cartesian pose cost for being away from the final point
   if (true)
+  {
+    Eigen::Quaterniond rotation(final_pose.linear());
+    std::shared_ptr<trajopt::CartPoseTermInfo> pose_constraint =
+        std::shared_ptr<trajopt::CartPoseTermInfo>(new trajopt::CartPoseTermInfo);
+    pose_constraint->term_type = trajopt::TT_COST;
+    pose_constraint->link = end_effector;
+    pose_constraint->timestep = 2 * steps_ - 1;
+    pose_constraint->xyz = final_pose.translation();
+    pose_constraint->pos_coeffs = 1.0 * Eigen::Vector3d(1, 1, 1);
+    pose_constraint->rot_coeffs = 1.0 * Eigen::Vector3d(1, 1, 1);
+
+    pose_constraint->wxyz = Eigen::Vector4d(rotation.w(), rotation.x(), rotation.y(), rotation.z());
+    pose_constraint->pos_coeffs = Eigen::Vector3d(10.0, 10.0, 10.0);
+    pose_constraint->rot_coeffs = Eigen::Vector3d(10.0, 10.0, 10.0);
+    pose_constraint->name = "pose_" + std::to_string(2 * steps_ - 1);
+    pci.cnt_infos.push_back(pose_constraint);
+  }
+
+  // Add a cost on the total time to complete the pick
+  if (false)
   {
     std::shared_ptr<trajopt::TotalTimeTermInfo> time_cost(new trajopt::TotalTimeTermInfo);
     time_cost->name = "time_cost";

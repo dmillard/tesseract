@@ -30,7 +30,7 @@
       <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 
       <!-- Launch planner node -->
-      <node name="tesseract_ros_examples_pick_and_place_example_node" pkg="tesseract_ros_examples" type="tesseract_ros_examples_pick_and_place_example_node" output="screen">
+      <node name="tesseract_ros_examples_pick_and_place_example_node" pkg="tesseract_ros_examples" type="tesseract_ros_examples_pick_and_place_example_node" launch-prefix="gdb --ex run --args" output="screen">
           <param name="steps_per_phase" value="$(arg steps_per_phase)"/>
           <param name="plotting" value="$(arg plotting)"/>
           <param name="file_write_cb" value="$(arg file_write_cb)" />
